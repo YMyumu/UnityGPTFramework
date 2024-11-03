@@ -22,11 +22,13 @@ public class LoadingUIPanel : UIBasePanel
         EventManager.Instance.Register(EventDefine.AFTER_SCENE_LOAD, OnSceneLoaded);
     }
 
-    private void OnDisable()
+
+    private void OnDestroy()
     {
         EventManager.Instance.Remove<float>(EventDefine.ON_SCENE_LOAD_PROGRESS_FOR_UIPANEL, UpdateProgress);
         EventManager.Instance.Remove(EventDefine.AFTER_SCENE_LOAD, OnSceneLoaded);
     }
+
 
     public override void Refresh()
     {
