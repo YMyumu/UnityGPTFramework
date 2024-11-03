@@ -1,0 +1,103 @@
+{
+  "UIPanels": [
+    {
+      "uiname": "Panel_1",
+      "path": "Prefabs/UI/Panel/Panel_1.prefab",
+      "uilayer": "Default",
+      "isfullpanel": true,
+      "isclosesamelayer": true,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "Panel_2",
+      "path": "Prefabs/UI/Panel/Panel_2.prefab",
+      "uilayer": "Default",
+      "isfullpanel": true,
+      "isclosesamelayer": true,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "InfoWindow_1",
+      "path": "Prefabs/UI/Panel/InfoWindow_1.prefab",
+      "uilayer": "Layer1",
+      "isfullpanel": false,
+      "isclosesamelayer": false,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "InfoWindow_2",
+      "path": "Prefabs/UI/Panel/InfoWindow_2.prefab",
+      "uilayer": "Layer1",
+      "isfullpanel": false,
+      "isclosesamelayer": false,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "Panel_3",
+      "path": "Prefabs/UI/Panel/Panel_3.prefab",
+      "uilayer": "Layer1",
+      "isfullpanel": true,
+      "isclosesamelayer": true,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "SelectWindow_1",
+      "path": "Prefabs/UI/Panel/SelectWindow_1.prefab",
+      "uilayer": "Layer2",
+      "isfullpanel": false,
+      "isclosesamelayer": true,
+      "ismodernpanel": true,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "SelectWindow_2",
+      "path": "Prefabs/UI/Panel/SelectWindow_2.prefab",
+      "uilayer": "Layer2",
+      "isfullpanel": false,
+      "isclosesamelayer": true,
+      "ismodernpanel": true,
+      "isclickmodernneedclose": true
+    },
+    {
+      "uiname": "Panel_4",
+      "path": "Prefabs/UI/Panel/Panel_4.prefab",
+      "uilayer": "Layer2",
+      "isfullpanel": true,
+      "isclosesamelayer": true,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "Hint_1",
+      "path": "Prefabs/UI/Panel/Hint_1.prefab",
+      "uilayer": "Layer3",
+      "isfullpanel": false,
+      "isclosesamelayer": false,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "Hint_2",
+      "path": "Prefabs/UI/Panel/Hint_2.prefab",
+      "uilayer": "Layer3",
+      "isfullpanel": false,
+      "isclosesamelayer": false,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    },
+    {
+      "uiname": "LoadingUIPanel",
+      "path": "Prefabs/UI/Panel/LoadingUIPanel.prefab",
+      "uilayer": "Layer4",
+      "isfullpanel": true,
+      "isclosesamelayer": false,
+      "ismodernpanel": false,
+      "isclickmodernneedclose": false
+    }
+  ]
+}
