@@ -41,7 +41,7 @@ public class MonoSingleton<T> : MonoBehaviour where T : Component
                 else
                 {
                     // 如果在场景中已找到实例，输出警告信息
-                    LogManager.LogWarning("Instance is already exist!");
+                    LogManager.LogWarning("实例已存在!");
                 }
             }
 

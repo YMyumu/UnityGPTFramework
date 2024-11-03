@@ -15,23 +15,44 @@ using UnityEngine.Events;
 
 namespace EventModule
 {
-    public abstract class EventDataBase
+    /// <summary>
+    /// 事件数据的基类，用于处理事件的基本状态和派发循环限制。
+    /// 实现了 IPoolable 接口，以便在对象池中进行管理。
+    /// </summary>
+    public abstract class EventDataBase : IPoolable
     {
-        private const int MaxDispatchLoopCount = 10;
+        private const int MaxDispatchLoopCount = 10; // 最大派发递归深度限制
+
+        public bool IsDispatching = false; // 当前事件是否正在派发
+        public int DispatchLoopCount = 0; // 当前的派发循环计数
 
         /// <summary>
-        /// 标志当前事件是否正在派发，用于防止递归派发导致的循环问题。
+        /// 初始化方法，在对象从池中获取时调用。
         /// </summary>
-        public bool IsDispatching = false;
+        public void Initialize(params object[] parameters)
+        {
+            OnGet(); // 重置派发状态
+        }
 
         /// <summary>
-        /// 递归派发计数器，记录事件递归派发的深度。
-        /// 每派发一次，计数器加一；派发完成后，计数器减一。
+        /// 重置方法，在对象回收到池中时调用。
         /// </summary>
-        public int DispatchLoopCount = 0;
+        public virtual void Reset()
+        {
+            IsDispatching = false;
+            DispatchLoopCount = 0;
+        }
 
         /// <summary>
-        /// 重置事件派发的状态，当事件被重新获取或复用时调用。
+        /// 释放方法，用于彻底清理资源，避免内存泄漏。
+        /// </summary>
+        public void Dispose()
+        {
+            Reset(); // 重置状态
+        }
+
+        /// <summary>
+        /// 重置派发状态。
         /// </summary>
         public void OnGet()
         {
@@ -40,22 +61,22 @@ namespace EventModule
         }
 
         /// <summary>
-        /// 检查当前事件队列中是否存在事件，确保事件数据有效。
+        /// 检查事件是否具有注册的监听器。
         /// </summary>
-        /// <returns>返回 true 表示有事件存在，false 表示事件队列为空</returns>
+        /// <returns>如果有监听器返回 true，否则返回 false。</returns>
         public abstract bool HasEvents();
 
         /// <summary>
-        /// 从事件管理器中移除指定的事件。
+        /// 移除指定事件管理器中的事件。
         /// </summary>
-        /// <param name="eventManager">事件管理器实例</param>
-        /// <param name="eventName">要移除的事件名称</param>
+        /// <param name="eventManager">事件管理器实例。</param>
+        /// <param name="eventName">事件名称。</param>
         public abstract void RemoveEvents(EventManager eventManager, string eventName);
 
         /// <summary>
-        /// 判断当前递归派发深度是否超过限制。
+        /// 检查是否可以继续派发事件。
+        /// 防止无限递归。
         /// </summary>
-        /// <returns>返回 true 表示可以继续派发，false 表示深度超限</returns>
         protected bool CanDispatch()
         {
             if (DispatchLoopCount >= MaxDispatchLoopCount)
@@ -66,6 +87,7 @@ namespace EventModule
             return true;
         }
     }
+
 
     /// <summary>
     /// 泛型事件数据类，用于管理单参事件的回调函数及派发。
@@ -161,6 +183,13 @@ namespace EventModule
             IsDispatching = false;
             DispatchLoopCount--;
         }
+
+        public override void Reset()
+        {
+            base.Reset();
+            _eventQueue.Clear();
+        }
+
     }
 
     /// <summary>
@@ -229,6 +258,12 @@ namespace EventModule
 
             IsDispatching = false;
             DispatchLoopCount--;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            _eventQueue.Clear();
         }
     }
 
@@ -300,6 +335,12 @@ namespace EventModule
             IsDispatching = false;
             DispatchLoopCount--;
         }
+
+        public override void Reset()
+        {
+            base.Reset();
+            _eventQueue.Clear();
+        }
     }
 
     /// <summary>
@@ -366,6 +407,12 @@ namespace EventModule
 
             IsDispatching = false;
             DispatchLoopCount--;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            _eventQueue.Clear();
         }
     }
 }

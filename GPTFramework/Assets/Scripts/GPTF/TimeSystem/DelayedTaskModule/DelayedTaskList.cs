@@ -12,10 +12,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DelayedTaskModule
 {
-    public class DelayedTaskList : IComparable, IEnumerable<DelayedTaskData>, IDisposable
+    public class DelayedTaskList : IComparable, IEnumerable<DelayedTaskData>, IPoolable
     {
         private bool _disposed = false;  // 标记对象是否已被释放，防止重复释放
         public long Time;  // 该任务列表的执行时间，所有任务将在该时间点统一触发
@@ -85,6 +86,18 @@ namespace DelayedTaskModule
                 DelayedTaskDataList = null;
             }
             _disposed = true;  // 标记对象已被释放
+        }
+
+        public void Initialize(params object[] parameters)
+        {
+        }
+
+        public void Reset()
+        {
+            // 释放托管资源：清空延时任务数据列表
+            Time = 0;
+            DelayedTaskDataList.Clear();
+            DelayedTaskDataList = null;
         }
 
         /// <summary>

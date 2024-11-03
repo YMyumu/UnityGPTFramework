@@ -26,8 +26,8 @@ public class TestPool : MonoBehaviour
 
     void Start()
     {
-        // 创建一个通用对象池，用于管理Int类型对象
-        GenericObjectPoolFactory.Instance.CreatePool<int>(10, 50);
+        //// 创建一个通用对象池，用于管理Int类型对象
+        //GenericObjectPoolFactory.Instance.CreatePool<int>(10, 50);
 
         // 加载Capsule预制体
         eapsulePrefab = ResourceManager.Instance.LoadResource<GameObject>("Prefabs/Objects/Capsule.prefab");
@@ -41,7 +41,7 @@ public class TestPool : MonoBehaviour
         // 从对象池中获取对象，并将其放置到随机位置
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            var obj = UnityObjectPoolFactory.Instance.GetObject("CapsulePool", gameObject);
+            var obj = UnityObjectPoolFactory.Instance.GetObject("CapsulePool");
             if (obj == null)
                 return;
 

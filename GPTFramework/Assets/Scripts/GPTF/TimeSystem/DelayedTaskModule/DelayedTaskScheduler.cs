@@ -95,7 +95,7 @@ namespace DelayedTaskModule
                 // 如果没有，则从对象池中获取新的任务列表，并初始化
                 delayedTaskList = GenericObjectPoolFactory.Instance.GetObject<DelayedTaskList>();
                 delayedTaskList.Time = timestamp ;
-                delayedTaskList.DelayedTaskDataList = GenericObjectPoolFactory.Instance.GetObject<List<DelayedTaskData>>();
+                delayedTaskList.DelayedTaskDataList = GenericObjectPool_NonPoolableFactory.Instance.GetObject<List<DelayedTaskData>>();
                 delayedTaskList.DelayedTaskDataList.Clear();  // 确保列表为空
                 _delayedTaskQueue.Insert(delayedTaskList);  // 将任务列表插入最小堆中
                 _delayedTaskDict.Add(timestamp , delayedTaskList);  // 记录到字典中
@@ -143,7 +143,7 @@ namespace DelayedTaskModule
                     _delayedTaskDict.Remove(delayedTaskData.Time);
                     if (_delayedTaskQueue.Delete(delayedTaskList))
                     {
-                        GenericObjectPoolFactory.Instance.RecycleObject(delayedTaskList.DelayedTaskDataList);
+                        GenericObjectPool_NonPoolableFactory.Instance.RecycleObject(delayedTaskList.DelayedTaskDataList);
                         GenericObjectPoolFactory.Instance.RecycleObject(delayedTaskList);
                         GenericObjectPoolFactory.Instance.RecycleObject(delayedTaskData);
                     }
@@ -198,7 +198,7 @@ namespace DelayedTaskModule
 
                 // 清理已完成的任务列表
                 delayedTaskList.DelayedTaskDataList.Clear();
-                GenericObjectPoolFactory.Instance.RecycleObject(delayedTaskList.DelayedTaskDataList);
+                GenericObjectPool_NonPoolableFactory.Instance.RecycleObject(delayedTaskList.DelayedTaskDataList);
                 GenericObjectPoolFactory.Instance.RecycleObject(delayedTaskList);
             }
         }

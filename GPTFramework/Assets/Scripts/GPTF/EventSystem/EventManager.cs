@@ -326,26 +326,34 @@ namespace EventModule
         /// </summary>
         public void Clear()
         {
-            // 创建一个临时列表来存储所有的事件键，避免集合修改错误
+            int clearedCount = 0;
+
+            // 先获取 eventDictionary 的键列表，避免在遍历时修改集合
             var keys = new List<string>(eventDictionary.Keys);
 
-            // 遍历临时存储的键列表
+            // 遍历键列表并清理每个事件的数据
             foreach (var eventName in keys)
             {
-                if (eventDictionary.TryGetValue(eventName, out var eventDataBase))
+                if (eventDictionary.TryGetValue(eventName, out var eventDataBase) && eventDataBase != null)
                 {
-                    // 调用事件的 RemoveEvents 方法，移除所有回调函数
+                    // 移除所有回调函数
                     eventDataBase.RemoveEvents(this, eventName);
 
                     // 回收事件数据对象到对象池
                     GenericObjectPoolFactory.Instance.RecycleObject(eventDataBase);
+
+                    clearedCount++;
                 }
             }
 
-            // 在所有事件被移除和回收后，最后清空事件字典
+            // 清空事件字典
             eventDictionary.Clear();
-            LogManager.LogInfo("所有事件已清除并回收到对象池");
+
+            // 记录日志，说明已清除的事件数量
+            LogManager.LogInfo($"所有事件已清除，总计 {clearedCount} 个事件被回收到对象池。");
         }
+
+
 
 
 

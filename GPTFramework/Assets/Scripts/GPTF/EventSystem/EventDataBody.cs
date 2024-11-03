@@ -14,7 +14,7 @@ using PoolModule;
 
 namespace EventModule
 {
-    public class EventDataBody<T>
+    public class EventDataBody<T> : IPoolable
     {
         /// <summary>
         /// 事件的回调函数，用于处理事件触发后的具体操作。
@@ -65,9 +65,42 @@ namespace EventModule
             EventAction = null;
             GenericObjectPoolFactory.Instance.RecycleObject(this);
         }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的初始化方法。
+        /// </summary>
+        public void Initialize(params object[] parameters)
+        {
+            if (parameters.Length > 0 && parameters[0] is UnityAction<T> action)
+            {
+                EventAction = action;
+            }
+
+            if (parameters.Length > 1 && parameters[1] is int priority)
+            {
+                Priority = priority;
+            }
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的重置方法，清除所有引用。
+        /// </summary>
+        public void Reset()
+        {
+            EventAction = null;
+            Priority = 0;
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的 Dispose 方法，用于彻底清理对象。
+        /// </summary>
+        public void Dispose()
+        {
+            Reset();
+        }
     }
 
-    public class EventDataBody<T1, T2>
+    public class EventDataBody<T1, T2> :IPoolable
     {
         /// <summary>
         /// 双参数事件的回调函数，用于处理事件触发后的具体操作。
@@ -101,9 +134,43 @@ namespace EventModule
             EventAction = null;
             GenericObjectPoolFactory.Instance.RecycleObject(this);
         }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的初始化方法。
+        /// </summary>
+        public void Initialize(params object[] parameters)
+        {
+            if (parameters.Length > 0 && parameters[0] is UnityAction<T1, T2> action)
+            {
+                EventAction = action;
+            }
+
+            if (parameters.Length > 1 && parameters[1] is int priority)
+            {
+                Priority = priority;
+            }
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的重置方法，清除所有引用。
+        /// </summary>
+        public void Reset()
+        {
+            EventAction = null;
+            Priority = 0;
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的 Dispose 方法，用于彻底清理对象。
+        /// </summary>
+        public void Dispose()
+        {
+            Reset();
+        }
+
     }
 
-    public class EventDataBody<T1, T2, T3>
+    public class EventDataBody<T1, T2, T3> :IPoolable
     {
         /// <summary>
         /// 三参数事件的回调函数，用于处理事件触发后的具体操作。
@@ -137,9 +204,42 @@ namespace EventModule
             EventAction = null;
             GenericObjectPoolFactory.Instance.RecycleObject(this);
         }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的初始化方法。
+        /// </summary>
+        public void Initialize(params object[] parameters)
+        {
+            if (parameters.Length > 0 && parameters[0] is UnityAction<T1, T2, T3> action)
+            {
+                EventAction = action;
+            }
+
+            if (parameters.Length > 1 && parameters[1] is int priority)
+            {
+                Priority = priority;
+            }
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的重置方法，清除所有引用。
+        /// </summary>
+        public void Reset()
+        {
+            EventAction = null;
+            Priority = 0;
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的 Dispose 方法，用于彻底清理对象。
+        /// </summary>
+        public void Dispose()
+        {
+            Reset();
+        }
     }
 
-    public class EventDataBody
+    public class EventDataBody : IPoolable
     {
         /// <summary>
         /// 无参事件的回调函数，用于处理事件触发后的具体操作。
@@ -172,6 +272,39 @@ namespace EventModule
         {
             EventAction = null;
             GenericObjectPoolFactory.Instance.RecycleObject(this);
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的初始化方法。
+        /// </summary>
+        public void Initialize(params object[] parameters)
+        {
+            if (parameters.Length > 0 && parameters[0] is UnityAction action)
+            {
+                EventAction = action;
+            }
+
+            if (parameters.Length > 1 && parameters[1] is int priority)
+            {
+                Priority = priority;
+            }
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的重置方法，清除所有引用。
+        /// </summary>
+        public void Reset()
+        {
+            EventAction = null;
+            Priority = 0;
+        }
+
+        /// <summary>
+        /// 实现 IPoolable 接口的 Dispose 方法，用于彻底清理对象。
+        /// </summary>
+        public void Dispose()
+        {
+            Reset();
         }
     }
 }

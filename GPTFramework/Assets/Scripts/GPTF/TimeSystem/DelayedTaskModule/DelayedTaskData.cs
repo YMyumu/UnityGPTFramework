@@ -13,7 +13,7 @@ using System;
 
 namespace DelayedTaskModule
 {
-    public class DelayedTaskData
+    public class DelayedTaskData :IPoolable
     {
         /// <summary>
         /// 该任务预定的执行时间。这个时间是一个绝对时间戳，通常以毫秒为单位。
@@ -56,6 +56,17 @@ namespace DelayedTaskModule
         /// 暂停时的时间差
         /// </summary>
         public long PauseTimeDifference;  // 记录暂停时的时间差
+
+        public void Initialize(params object[] parameters)
+        {
+        }
+
+        public void Reset()
+        {
+        }
+        public void Dispose()
+        {
+        }
 
     }
 }

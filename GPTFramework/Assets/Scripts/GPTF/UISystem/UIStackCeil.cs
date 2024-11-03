@@ -85,6 +85,26 @@ namespace UIModule
             _param = null;
             _isFirstShow = true;  // 重置标志位
         }
+
+
+        /// <summary>
+        /// Dispose 方法用于释放资源，包括托管和非托管资源。
+        /// 在对象生命周期结束时调用。
+        /// </summary>
+        public void Dispose()
+        {
+            // 清除引用类型字段，避免内存泄漏
+            IsShowing = false;
+            IsCloseSameNamePanel = false;
+            _panelParam.Clear();
+            Panel = null;
+            _param = null;
+            _isFirstShow = true;  // 重置标志位
+
+            // 如果有非托管资源，可在此释放
+            // 例如：关闭文件句柄、释放数据库连接等
+            // GC.SuppressFinalize(this);  // 禁用对象的终结器，避免二次释放
+        }
     }
 
 }

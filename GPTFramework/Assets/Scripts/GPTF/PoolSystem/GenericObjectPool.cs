@@ -1,87 +1,71 @@
-/// <summary>
-/// GenericObjectPool 类用于管理非 Unity 对象的通用对象池。
-/// 支持从对象池中获取对象和回收对象，同时提供对象池清理功能。
-/// </summary>
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
+using UnityEditor;
 
 namespace PoolModule
 {
-    public class GenericObjectPool<T>
+    /// <summary>
+    /// GenericObjectPool 类用于管理实现 IPoolable 接口的对象的通用对象池。
+    /// 支持对象的获取、回收和清理，以便复用对象并释放资源，避免内存泄漏。
+    /// </summary>
+    /// <typeparam name="T">池中管理的对象类型，必须实现 IPoolable 接口。</typeparam>
+    public class GenericObjectPool<T> : IGenericObjectPool where T : class, IPoolable, new()
     {
-        private Queue<T> _objects;
-        private int _maxPoolSize;
-        private int _totalCount;
-        private bool _implementsIPoolable;
+        private readonly ConcurrentQueue<T> _objects; // 用于存储对象池中的对象
+        private int _maxPoolSize; // 对象池的最大大小
+        private int _currentSize; // 当前对象池的总计数
 
-        public GenericObjectPool(int initialSize = 10, int maxPoolSize = 100)
+        /// <summary>
+        /// 构造函数，初始化对象池并创建初始对象。
+        /// </summary>
+        /// <param name="initialSize">对象池初始化时创建的对象数量。</param>
+        /// <param name="maxPoolSize">对象池允许存储的最大对象数量。</param>
+        public GenericObjectPool(int initialSize, int maxPoolSize)
         {
             _maxPoolSize = maxPoolSize;
-            _objects = new Queue<T>(initialSize);
+            _objects = new ConcurrentQueue<T>();
 
-            // 检查对象是否实现 IPoolable 接口
-            _implementsIPoolable = typeof(IPoolable).IsAssignableFrom(typeof(T));
+            // 根据初始大小创建对象并放入池中
+            for (int i = 0; i < initialSize; i++)
+            {
+                _objects.Enqueue(CreateNewObject());
+            }
         }
 
-
-        #region 动态扩展和固定大小两种从对象池中获取对象的方式
         /// <summary>
         /// 从对象池中获取对象。
-        /// 动态大小
+        /// 如果对象池为空且未达到最大容量，则创建新对象。
+        /// 调用 Initialize 方法初始化对象。
         /// </summary>
-        /// <param name="parameters">初始化对象时传递的参数</param>
-        /// <returns>获取的对象实例</returns>
+        /// <param name="parameters">可选的初始化参数。</param>
+        /// <returns>从对象池中获取的对象实例。</returns>
         public T Get(params object[] parameters)
         {
-            T obj = _objects.Count > 0 ? _objects.Dequeue() : CreateNewObject();
-
-            if (_implementsIPoolable && obj is IPoolable poolableObj)
+            if (_objects.TryDequeue(out T obj))
             {
-                poolableObj.Initialize(parameters);
+                obj.Initialize(parameters);
+                return obj;
             }
 
-            return obj;
+            if (_currentSize < _maxPoolSize)
+            {
+                _currentSize++;
+                var newObj = CreateNewObject();
+                newObj.Initialize(parameters);
+                return newObj;
+            }
+
+            return null;
         }
 
-        ///// <summary>
-        ///// 从对象池中获取对象。如果池中没有可用对象且未达到最大大小，则创建新对象。
-        ///// 固定大小
-        ///// </summary>
-        ///// <param name="parameters">初始化对象时传递的参数</param>
-        ///// <returns>获取的对象实例</returns>
-        //public T Get(params object[] parameters)
-        //{
-        //    // 如果池中有对象，直接从队列中取出
-        //    if (_objects.Count > 0)
-        //    {
-        //        T obj = _objects.Dequeue();
-        //        InitializeObject(obj, parameters);
-        //        return obj;
-        //    }
-
-        //    // 如果总对象数小于最大值，则创建新对象
-        //    if (_totalCount < _maxPoolSize)
-        //    {
-        //        T obj = CreateNewObject();
-        //        InitializeObject(obj, parameters);
-        //        return obj;
-        //    }
-
-        //    // 如果对象池已满，返回 null
-        //    return default;
-        //}
-        #endregion
-
         /// <summary>
-        /// 回收对象到对象池。
+        /// 将对象回收到对象池中。
+        /// 调用 Reset 方法重置对象状态，如果池已满则调用 Dispose 释放对象。
         /// </summary>
-        /// <param name="obj">需要回收的对象</param>
+        /// <param name="obj">需要回收的对象。</param>
         public void Recycle(T obj)
         {
-            if (_implementsIPoolable && obj is IPoolable poolableObj)
-            {
-                poolableObj.Reset();
-            }
+            obj.Reset();
 
             if (_objects.Count < _maxPoolSize)
             {
@@ -89,56 +73,81 @@ namespace PoolModule
             }
             else
             {
-                _totalCount--;
+                obj.Dispose(); // 池已满，彻底释放资源
+                _currentSize--;
             }
         }
 
         /// <summary>
-        /// 清理对象池。
+        /// 统一将对象回收到对象池中。
+        /// 调用 Reset 方法重置对象状态，如果池已满则调用 Dispose 释放对象。
         /// </summary>
-        /// <param name="shouldCleanup">决定是否清理对象的条件函数</param>
-        public void Cleanup(Func<T, bool> shouldCleanup)
+        /// <param name="obj"></param>
+        public void Recycle(IPoolable obj)
         {
-            int count = _objects.Count;
-            for (int i = 0; i < count; i++)
+            if (obj is T typedObj)
             {
-                T obj = _objects.Dequeue();
-                if (shouldCleanup(obj))
+                typedObj.Reset();
+
+                if (_objects.Count < _maxPoolSize)
                 {
-                    _totalCount--;
+                    _currentSize++;
+                    _objects.Enqueue(typedObj);
                 }
                 else
                 {
-                    _objects.Enqueue(obj);
+                    obj.Dispose(); // 池已满，彻底释放资源
                 }
             }
         }
 
         /// <summary>
-        /// 清理所有对象，移除池中所有对象。
+        /// 根据指定的条件清理对象池中的对象。
+        /// 满足条件的对象将调用 Dispose 方法释放。
+        /// </summary>
+        /// <param name="shouldCleanup">一个条件函数，返回 true 表示需要清理该对象。</param>
+        public void Cleanup(Func<T, bool> shouldCleanup)
+        {
+            int count = _objects.Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (_objects.TryDequeue(out T obj))
+                {
+                    if (shouldCleanup(obj))
+                    {
+                        obj.Dispose(); // 清理符合条件的对象并释放资源
+                        _currentSize--;
+                    }
+                    else
+                    {
+                        _objects.Enqueue(obj);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 清理对象池中所有对象，移除所有对象并重置计数。
+        /// 调用 Dispose 释放每个对象的资源。
         /// </summary>
         public void CleanupAll()
         {
-            while (_objects.Count > 0)
+            while (_objects.TryDequeue(out T obj))
             {
-                T obj = _objects.Dequeue();
-                if (obj is System.IDisposable disposable)
-                {
-                    disposable.Dispose();  // 如果对象实现了 IDisposable，则调用 Dispose
-                }
+                obj.Dispose(); // 释放对象资源
             }
-            _totalCount = 0;  // 重置对象计数
+            _currentSize = 0;
         }
-
 
         /// <summary>
-        /// 创建新对象。
+        /// 创建一个新的对象实例。
         /// </summary>
-        /// <returns>创建的新对象实例</returns>
+        /// <returns>新创建的对象。</returns>
         private T CreateNewObject()
         {
-            _totalCount++;
-            return Activator.CreateInstance<T>();
+            return new T();
         }
+
     }
 }

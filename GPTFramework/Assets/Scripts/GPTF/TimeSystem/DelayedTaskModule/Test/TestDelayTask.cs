@@ -12,14 +12,14 @@ namespace DelayedTaskModule
     {
         private void Start()
         {
-            AddLaterExecuteFunc(1.5f);
             //AddLaterExecuteFunc(1.5f);
-            //AddLaterExecuteFunc(1.5f);
-            //AddLaterExecuteFunc(4.5f);
-            //AddLaterExecuteFunc(4.5f);
-            //AddLaterExecuteFunc(4.5f);
+            ////AddLaterExecuteFunc(1.5f);
+            ////AddLaterExecuteFunc(1.5f);
+            ////AddLaterExecuteFunc(4.5f);
+            ////AddLaterExecuteFunc(4.5f);
+            ////AddLaterExecuteFunc(4.5f);
 
-            string a = DelayedTaskScheduler.Instance.AddDelayedTask(1, () => { LogManager.LogInfo(TimerUtil.GetTimeStamp().ToString()); }, null,false, true, 5);
+            //string a = DelayedTaskScheduler.Instance.AddDelayedTask(1, () => { LogManager.LogInfo(TimerUtil.GetTimeStamp().ToString()); }, null,false, true, 5);
 
 
 
@@ -63,13 +63,13 @@ namespace DelayedTaskModule
         private string AddLaterExecuteFunc(float time, Action completeAction = null, Action earlyRemoveAction = null)
         {
             var pressTime = Time.time;
-            Stopwatch stopwatch = GenericObjectPoolFactory.Instance.GetObject<Stopwatch>();
+            Stopwatch stopwatch = GenericObjectPool_NonPoolableFactory.Instance.GetObject<Stopwatch>();
             stopwatch.Restart();
             return DelayedTaskScheduler.Instance.AddDelayedTask(time,
                 () =>
                 {
                     stopwatch.Stop();
-                    GenericObjectPoolFactory.Instance.RecycleObject(stopwatch);
+                    GenericObjectPool_NonPoolableFactory.Instance.RecycleObject(stopwatch);
                     // Debug.Log($"{time}秒后了,执行了对应方法。实际过去了{Time.time - pressTime}秒");
                     LogManager.LogInfo($"{time}秒后了,执行了对应方法。实际过去了{stopwatch.ElapsedMilliseconds / 1000.0f}秒");
                     completeAction?.Invoke();
@@ -78,7 +78,7 @@ namespace DelayedTaskModule
                     earlyRemoveAction?.Invoke();
                     stopwatch.Stop();
                     LogManager.LogInfo($"提前移除了，已经过去了{stopwatch.ElapsedMilliseconds / 1000.0f}秒");
-                    GenericObjectPoolFactory.Instance.RecycleObject(stopwatch);
+                    GenericObjectPool_NonPoolableFactory.Instance.RecycleObject(stopwatch);
                 });
         }
 

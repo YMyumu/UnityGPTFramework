@@ -1,109 +1,128 @@
-/// <summary>
-/// UnityObjectPoolFactory 类用于管理多个 UnityObjectPool 实例。
-/// 可以为不同的对象类型创建和管理各自的对象池，支持对象池的统一创建、获取、回收和清理操作。
-/// </summary>
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 namespace PoolModule
 {
+    /// <summary>
+    /// UnityObjectPoolFactory 管理所有 UnityObjectPool 的实例，
+    /// 根据名称获取对象池，并支持自动加载和清理功能。
+    /// </summary>
     public class UnityObjectPoolFactory : Singleton<UnityObjectPoolFactory>
     {
-        // 委托，用于根据名字加载预制件  需要在合适的地方对委托进行绑定 在此对象池工厂内没有指定
-        public System.Func<string, GameObject> LoadFuncDelegate;
-
-        // 用于管理对象池的字典，使用名字作为键
-        private Dictionary<string, UnityObjectPool> _pools = new Dictionary<string, UnityObjectPool>();
+        private readonly Dictionary<string, UnityObjectPool> _pools = new Dictionary<string, UnityObjectPool>();
+        public Func<string, GameObject> LoadFuncDelegate; // 委托，用于加载预制体
 
         /// <summary>
-        /// 创建对象池，如果对象池已经存在，则不创建新的池。
+        /// 创建新的对象池，如果已存在则不会重复创建。
         /// </summary>
-        /// <param name="prefab">管理的 GameObject 预制体</param>
+        /// <param name="prefab">对象池管理的预制体</param>
         /// <param name="poolName">对象池的名称</param>
-        /// <param name="initialSize">初始创建的对象数量</param>
-        /// <param name="maxPoolSize">对象池的最大大小</param>
+        /// <param name="initialSize">初始对象池大小</param>
+        /// <param name="maxPoolSize">对象池的最大容量</param>
         public void CreatePool(GameObject prefab, string poolName, int initialSize, int maxPoolSize)
         {
             if (!_pools.ContainsKey(poolName))
             {
-                UnityObjectPool pool = new UnityObjectPool(prefab, initialSize, maxPoolSize);
-                _pools[poolName] = pool;
+                _pools[poolName] = new UnityObjectPool(prefab, initialSize, maxPoolSize);
             }
         }
 
         /// <summary>
-        /// 获取对象池中的对象。
+        /// 获取对象池中的对象。如果池不存在且提供了加载委托，则会自动加载并创建新池。
         /// </summary>
-        /// <param name="poolName">对象池的名称</param>
-        /// <param name="parameters">初始化对象时传递的参数</param>
-        /// <returns>获取的 GameObject 对象</returns>
-        public GameObject GetObject(string poolName, params object[] parameters)
+        /// <param name="poolName">对象池名称</param>
+        /// <returns>从池中获取的对象实例</returns>
+        public GameObject GetObject(string poolName)
         {
-            GameObject result = null;
-
-            // 检查对象池是否存在
             if (_pools.TryGetValue(poolName, out var pool))
             {
-                result = pool.Get(); // 从对象池中获取对象
-            }
-            else if (LoadFuncDelegate != null)
-            {
-                // 使用委托加载预制件并创建对象池
-                CreatePool(LoadFuncDelegate(poolName), poolName, 0, 500);
-                result = _pools[poolName].Get();
+                return pool.Get();
             }
 
-            return result;
+            if (LoadFuncDelegate != null)
+            {
+                var prefab = LoadFuncDelegate(poolName);
+                if (prefab != null) // 确保加载成功
+                {
+                    CreatePool(prefab, poolName, 0, 500); // 使用默认大小创建新池
+                    return _pools[poolName].Get();
+                }
+            }
+            return null;
         }
 
         /// <summary>
-        /// 将对象回收到指定的对象池中。
+        /// 将对象回收到指定名称的对象池中。
         /// </summary>
-        /// <param name="poolName">对象池的名称</param>
-        /// <param name="obj">需要回收的对象</param>
+        /// <param name="obj">要回收的对象</param>
+        /// <param name="poolName">对象池名称</param>
         public void RecycleObject(string poolName, GameObject obj)
         {
             if (_pools.TryGetValue(poolName, out var pool))
             {
                 pool.Recycle(obj);
             }
+            else
+            {
+                GameObject.Destroy(obj); // 如果没有池则销毁对象
+            }
         }
 
         /// <summary>
-        /// 清理指定对象池。
+        /// 清理指定类型对象池中的对象，根据条件判断是否移除。
         /// </summary>
-        /// <param name="poolName">对象池的名称</param>
-        /// <param name="shouldCleanup">决定是否清理对象的条件函数</param>
-        public void CleanupPool(string poolName, System.Func<GameObject, bool> shouldCleanup)
+        /// <param name="poolName">对象池名称</param>
+        /// <param name="shouldCleanup">判断是否清理对象的条件函数</param>
+        public void CleanupPool(string poolName, Func<GameObject, bool> shouldCleanup)
         {
             if (_pools.TryGetValue(poolName, out var pool))
             {
-                pool.Cleanup(shouldCleanup);
+                Queue<GameObject> remainingObjects = new Queue<GameObject>();
+
+                // 通过 Count 属性检查对象数量
+                while (pool.Count > 0)
+                {
+                    var obj = pool.Get();
+                    if (shouldCleanup(obj))
+                    {
+                        GameObject.Destroy(obj); // 符合条件则销毁
+                    }
+                    else
+                    {
+                        remainingObjects.Enqueue(obj); // 不符合条件则重新入池
+                    }
+                }
+                while (remainingObjects.Count > 0)
+                {
+                    pool.Recycle(remainingObjects.Dequeue()); // 将未清理的对象重新放入池中
+                }
             }
         }
 
         /// <summary>
-        /// 清理所有对象池。
+        /// 清理并移除指定名称的对象池，销毁所有池中的对象。
         /// </summary>
-        /// <param name="shouldCleanup">决定是否清理对象的条件函数</param>
-        public void CleanupAllPools(System.Func<GameObject, bool> shouldCleanup)
-        {
-            foreach (var pool in _pools.Values)
-            {
-                pool.Cleanup(shouldCleanup);
-            }
-        }
-
-        // 清理所有对象并移除指定的对象池
+        /// <param name="poolName">对象池名称</param>
         public void RemovePool(string poolName)
         {
             if (_pools.TryGetValue(poolName, out var pool))
             {
-                pool.CleanupAll();  // 清理池中的所有对象
-                _pools.Remove(poolName);  // 从字典中移除这个对象池
+                pool.CleanupAll();
+                _pools.Remove(poolName); // 移除对象池的引用
             }
         }
-    }
 
+        /// <summary>
+        /// 清理并移除所有对象池，销毁所有池中的对象。
+        /// </summary>
+        public void ClearAllPools()
+        {
+            foreach (var pool in _pools.Values)
+            {
+                pool.CleanupAll();
+            }
+            _pools.Clear(); // 清空字典，移除所有对象池
+        }
+    }
 }
