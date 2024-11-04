@@ -29,7 +29,20 @@ namespace UIModule
         // 字典存储打开的 UI 面板
         private Dictionary<string, UIBasePanel> _panelDic = new Dictionary<string, UIBasePanel>();
         private Dictionary<string, List<UIStackCeil>> _uiStacks = new Dictionary<string, List<UIStackCeil>>();
+
+        public List<UIStackCeil> _uiStacks0Look = new List<UIStackCeil>();
+        public List<UIStackCeil> _uiStacks1Look = new List<UIStackCeil>();
+        public List<UIStackCeil> _uiStacks2Look = new List<UIStackCeil>();
+        public List<UIStackCeil> _uiStacks3Look = new List<UIStackCeil>();
+        public List<UIStackCeil> _uiStacks4Look = new List<UIStackCeil>();
+
+
         private Dictionary<string, (string destroyTaskToken, GameObject panel)> _waitDestroyPanelDic = new Dictionary<string, (string, GameObject)>();
+
+        
+        private Dictionary<string, List<UIStackCeil>> fullscreenPanelState = new Dictionary<string, List<UIStackCeil>>();
+
+
 
         public GameObject canvasRoot; // 画布根对象
         public Transform defaultLayerRoot, layer1Root, layer2Root, layer3Root, layer4Root; // 各层级的根节点
@@ -68,10 +81,19 @@ namespace UIModule
             _uiStacks.Add("Layer2", new List<UIStackCeil>());
             _uiStacks.Add("Layer3", new List<UIStackCeil>());
             _uiStacks.Add("Layer4", new List<UIStackCeil>());
+
+
+            _uiStacks0Look = _uiStacks["Default"];
+            _uiStacks1Look = _uiStacks["Layer1"];
+            _uiStacks2Look = _uiStacks["Layer2"];
+            _uiStacks3Look = _uiStacks["Layer3"];
+            _uiStacks3Look = _uiStacks["Layer4"];
+
+
         }
 
         // 打开指定名称的 UI 界面
-        public void OpenPanel(string uiName, ScreenParam param = null, bool shouldCloseHigherLayers = false)
+        public void OpenPanel(string uiName, ScreenParam param = null)
         {
             UIPanels uiConfig = LoadUIPanelConfig(uiName);
             if (uiConfig == null) return; // 找不到配置，退出
@@ -81,7 +103,46 @@ namespace UIModule
             if (panel == null) return; // 获取失败，退出
 
             ConfigurePanel(panel, uiConfig); // 配置面板
-            HandleFullPanel(panel, uiConfig, param, shouldCloseHigherLayers); // 处理全屏面板逻辑
+
+
+
+            // 检查是否已存在相同的全屏界面
+            UIStackCeil existingFullScreenPanel = _uiStacks[uiConfig.UILayer].Find(p => p.Panel == panel);
+            if (existingFullScreenPanel != null)
+            {
+                StartCoroutine(existingFullScreenPanel.Show(param)); // 显示已存在的面板
+            }
+            else
+            {
+
+                if (panel.IsCloseSameLayer())       // 如果需要关闭同层其他界面
+                {
+                    CloseOtherPanelsInLayer(panel.UILayer);
+                }
+
+                if (panel.IsFullPanel())        //如果是全屏界面
+                {
+                    // 获取当前全屏界面层级内到上一个全屏窗口（包括）所有的窗口界面
+                    fullscreenPanelState.Add(panel.GetPanelName(), GetPreviousFullScreenStackCeils(panel.UILayer));
+
+                    // 找到了上一个全屏界面（包括）之间的所有窗口并隐藏
+                    if (fullscreenPanelState.TryGetValue(panel.GetPanelName(), out var uiStack))
+                    {
+                        if (uiStack.Count > 0)
+                        {
+                            foreach (var item in uiStack)
+                            {
+                                item.Hide();
+                            }
+
+                        }
+                    }
+                }
+                CreatePanelStack(panel, uiConfig.UILayer, param); // 创建新的面板栈
+                ResortPanel(uiConfig.UILayer); // 重新排列面板
+            }
+
+            //HandlePanel(panel, uiConfig, param); // 处理面板逻辑
 
             if (panel.IsModernPanel())
             {
@@ -227,21 +288,21 @@ namespace UIModule
             }
         }
 
-        // 处理全屏面板逻辑（简化示例，具体逻辑根据项目需要实现）
-        private void HandleFullPanel(UIBasePanel panel, UIPanels uiConfig, ScreenParam param, bool shouldCloseHigherLayers)
-        {
-            // 检查是否已存在相同的全屏界面
-            UIStackCeil existingFullScreenPanel = _uiStacks[uiConfig.UILayer].Find(p => p.Panel == panel);
-            if (existingFullScreenPanel != null)
-            {
-                StartCoroutine(existingFullScreenPanel.Show(param)); // 显示已存在的面板
-            }
-            else
-            {
-                CreatePanelStack(panel, uiConfig.UILayer, param); // 创建新的面板栈
-                ResortPanel(uiConfig.UILayer); // 重新排列面板
-            }
-        }
+        //// 处理面板逻辑
+        //private void HandlePanel(UIBasePanel panel, UIPanels uiConfig, ScreenParam param)
+        //{
+        //    // 检查是否已存在相同的全屏界面
+        //    UIStackCeil existingFullScreenPanel = _uiStacks[uiConfig.UILayer].Find(p => p.Panel == panel);
+        //    if (existingFullScreenPanel != null)
+        //    {
+        //        StartCoroutine(existingFullScreenPanel.Show(param)); // 显示已存在的面板
+        //    }
+        //    else
+        //    {
+        //        CreatePanelStack(panel, uiConfig.UILayer, param); // 创建新的面板栈
+        //        ResortPanel(uiConfig.UILayer); // 重新排列面板
+        //    }
+        //}
 
         // 创建面板栈并显示
         private UIStackCeil CreatePanelStack(UIBasePanel panel, string layer, ScreenParam param)
@@ -296,5 +357,69 @@ namespace UIModule
                 }
             }
         }
+
+
+        // 关闭当前层级中的所有其他界面
+        public void CloseOtherPanelsInLayer(string currentLayer)
+        {
+            if (_uiStacks.TryGetValue(currentLayer, out var uiStack))
+            {
+                foreach (var stackCeil in uiStack)
+                {
+                    if (stackCeil.IsShowing)
+                    {
+                        ClosePanel(stackCeil.Panel.GetPanelName()); // 关闭面板
+                    }
+                }
+            }
+        }
+
+        // 获取当前层到上一个全屏界面的所有窗口，包括全屏界面的包装类 UIStackCeil
+        public List<UIStackCeil> GetPreviousFullScreenStackCeils(string currentLayer)
+        {
+            List<UIStackCeil> stackCeilsToReturn = new List<UIStackCeil>();
+
+            // 遍历当前层及其下方的所有层
+            foreach (var layer in _uiStacks.Keys)
+            {
+                // 只处理当前层及其下方层级
+                if (layer.CompareTo(currentLayer) > 0)
+                {
+                    continue; // 跳过高于当前层的层级
+                }
+
+                // 检查当前层的UI栈
+                if (_uiStacks.TryGetValue(layer, out var uiStack))
+                {
+                    // 从栈中查找最后一个全屏界面
+                    for (int i = uiStack.Count - 1; i >= 0; i--)
+                    {
+                        var stackCeil = uiStack[i];
+
+                        // 如果找到全屏界面，添加它和之前的所有窗口
+                        if (stackCeil.Panel.IsFullPanel())
+                        {
+                            stackCeilsToReturn.Add(stackCeil); // 添加全屏界面的包装类
+
+                            // 添加全屏界面所有的窗口
+                            foreach (var window in uiStack)
+                            {
+                                if (window.Panel != stackCeil.Panel) // 确保不重复添加全屏界面
+                                {
+                                    stackCeilsToReturn.Add(window); // 添加窗口的包装类
+                                }
+                            }
+                            return stackCeilsToReturn; // 找到全屏界面后，返回结果
+                        }
+                    }
+                }
+            }
+
+            return stackCeilsToReturn; // 如果没有找到全屏界面，返回空列表
+        }
+
+
+
+
     }
 }
