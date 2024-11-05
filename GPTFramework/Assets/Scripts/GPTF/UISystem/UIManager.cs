@@ -37,7 +37,7 @@ namespace UIModule
         public List<UIStackCeil> _uiStacks4Look = new List<UIStackCeil>();
 
 
-        private Dictionary<string, (string destroyTaskToken, GameObject panel)> _waitDestroyPanelDic = new Dictionary<string, (string, GameObject)>();
+        private Dictionary<string, (string destroyTaskToken, UIStackCeil stackCeil)> _waitDestroyPanelDic = new Dictionary<string, (string, UIStackCeil)>();
 
         
         private Dictionary<string, List<UIStackCeil>> fullscreenPanelState = new Dictionary<string, List<UIStackCeil>>();
@@ -76,11 +76,12 @@ namespace UIModule
         // 初始化 UI 栈
         private void InitializeUIStacks()
         {
-            _uiStacksDict.Add("Default", new List<UIStackCeil>());
-            _uiStacksDict.Add("Layer1", new List<UIStackCeil>());
-            _uiStacksDict.Add("Layer2", new List<UIStackCeil>());
-            _uiStacksDict.Add("Layer3", new List<UIStackCeil>());
+            // 字典键入的顺序很重要 关乎到按层级查找界面，需要满足从上到下
             _uiStacksDict.Add("Layer4", new List<UIStackCeil>());
+            _uiStacksDict.Add("Layer3", new List<UIStackCeil>());
+            _uiStacksDict.Add("Layer2", new List<UIStackCeil>());
+            _uiStacksDict.Add("Layer1", new List<UIStackCeil>());
+            _uiStacksDict.Add("Default", new List<UIStackCeil>());
 
 
             _uiStacks0Look = _uiStacksDict["Default"];
@@ -98,12 +99,42 @@ namespace UIModule
             UIPanels uiConfig = LoadUIPanelConfig(uiName);
             if (uiConfig == null) return; // 找不到配置，退出
 
-            HandleWaitingForDestruction(uiName); // 处理等待销毁的界面
+
+
+
             UIBasePanel panel = GetPanel(uiConfig); // 获取或实例化面板
             if (panel == null) return; // 获取失败，退出
 
             ConfigurePanel(panel, uiConfig); // 配置面板
 
+
+            if (panel.IsCloseSameLayer())       // 如果需要关闭同层其他界面   关闭走的协程 所以实际界面关闭肯定是靠后的，下方代码会快过界面关闭
+            {
+                CloseOtherPanelsInLayer(panel.UILayer);
+            }
+
+
+            if (panel.IsFullPanel())        //如果是全屏界面
+            {
+                // 获取当前全屏界面层级内到上一个全屏窗口（包括）所有的窗口界面
+                fullscreenPanelState.Add(panel.GetPanelName(), GetPreviousFullScreenStackCeils(panel.UILayer, panel.IsCloseSameLayer()));
+
+                // 找到了上一个全屏界面（包括）之间的所有窗口并隐藏
+                if (fullscreenPanelState.TryGetValue(panel.GetPanelName(), out var uiStack))
+                {
+                    if (uiStack.Count > 0)
+                    {
+                        foreach (var item in uiStack)
+                        {
+                            item.Hide();
+                        }
+
+                    }
+                }
+            }
+
+            // TOOD:这里需要做判断
+            HandleWaitingForDestruction(uiName); // 处理等待销毁的界面
 
             // 检查是否已存在相同的全屏界面
             UIStackCeil existingFullScreenPanel = _uiStacksDict[uiConfig.UILayer].Find(p => p.panel == panel);
@@ -113,33 +144,6 @@ namespace UIModule
             }
             else
             {
-
-                if (panel.IsCloseSameLayer())       // 如果需要关闭同层其他界面
-                {
-                    CloseOtherPanelsInLayer(panel.UILayer);
-                }
-
-                if (panel.IsFullPanel())        //如果是全屏界面
-                {
-                    // 获取当前全屏界面层级内到上一个全屏窗口（包括）所有的窗口界面
-                    fullscreenPanelState.Add(panel.GetPanelName(), GetPreviousFullScreenStackCeils(panel.UILayer));
-
-                    // 找到了上一个全屏界面（包括）之间的所有窗口并隐藏
-                    if (fullscreenPanelState.TryGetValue(panel.GetPanelName(), out var uiStack))
-                    {
-                        if (uiStack.Count > 0)
-                        {
-                            foreach (var item in uiStack)
-                            {
-                                item.Hide();
-                            }
-
-                        }
-                    }
-                }
-
-
-
                 CreatePanelStack(panel, uiConfig.UILayer, param); // 创建新的面板栈
 
                 //ResortPanel(uiConfig.UILayer); // 重新排列面板
@@ -219,9 +223,8 @@ namespace UIModule
             return uiStackCeil; // 返回创建的面板栈
         }
 
+        
 
-
- 
 
         #region 关闭界面与销毁的逻辑
 
@@ -294,7 +297,15 @@ namespace UIModule
                 GenericObjectPoolFactory.Instance.RecycleObject(stackCeil);
 
             });
-            _waitDestroyPanelDic.Add(stackCeil.panel.GetPanelName(), (destroyTaskToken, stackCeil.panel.gameObject)); // 添加到等待销毁字典
+            _waitDestroyPanelDic.Add(stackCeil.panel.GetPanelName(), (destroyTaskToken, stackCeil)); // 添加到等待销毁字典
+            _uiStacksDict[stackCeil.panel.UILayer].Remove(stackCeil);
+
+            if (IsAllLayersEmpty)
+            {
+                OpenPanel(_defaultUIName);
+            }
+
+
         }
 
         // 重新打开了等待销毁的面板逻辑
@@ -302,10 +313,11 @@ namespace UIModule
         {
             if (_waitDestroyPanelDic.TryGetValue(uiName, out var tuple))
             {
+                tuple.stackCeil.isHideWaitClose = false;
                 DelayedTaskScheduler.Instance.RemoveDelayedTask(tuple.destroyTaskToken); // 取消延迟销毁
-                _waitDestroyPanelDic.Remove(uiName); // 移除等待销毁字典
-                stackCeil.isHideWaitClose = false;
 
+                _uiStacksDict[tuple.stackCeil.panel.UILayer].Add(tuple.stackCeil);
+                _waitDestroyPanelDic.Remove(uiName); // 移除等待销毁字典
             }
         }
 
@@ -420,64 +432,116 @@ namespace UIModule
         {
             if (_uiStacksDict.TryGetValue(currentLayer, out var uiStacks))
             {
+                List<string> paneNames = new List<string>();
+
                 foreach (var stackCeil in uiStacks)
                 {
                     if (stackCeil.isShowing)
                     {
-                        ClosePanel(stackCeil.panel.GetPanelName()); // 关闭面板
+                        paneNames.Add(stackCeil.panel.GetPanelName());
                     }
                 }
+                foreach (var name in paneNames)
+                {
+                    ClosePanel(name); // 关闭面板
+
+                }
+                paneNames.Clear();
+                paneNames = null;
             }
         }
 
 
 
 
-
-        // 获取当前层到上一个全屏界面的所有窗口,包括全屏界面的包装类 UIStackCeil
-        public List<UIStackCeil> GetPreviousFullScreenStackCeils(string currentLayer)
+        // 获取当前层到上一个全屏界面的所有窗口，包括全屏界面的包装类 UIStackCeil
+        public List<UIStackCeil> GetPreviousFullScreenStackCeils(string currentLayer, bool isCloseSameLayer)
         {
             List<UIStackCeil> stackCeilsToReturn = new List<UIStackCeil>();
 
-            // 遍历当前层及其下方的所有层
+            // 遍历当前层级及其下方层级
+            bool foundFullScreen = false;
+
             foreach (var layer in _uiStacksDict.Keys)
             {
-                // 只处理当前层及其下方层级
-                if (layer.CompareTo(currentLayer) > 0)
+                // 只处理当前层及其下方层级   如果需要关闭同层 则不处理当前层
+                if (UILayerIndex(layer) > UILayerIndex(currentLayer) || (isCloseSameLayer && UILayerIndex(layer) == UILayerIndex(currentLayer)))
                 {
+
                     continue; // 跳过高于当前层的层级
                 }
 
                 // 检查当前层的UI栈
                 if (_uiStacksDict.TryGetValue(layer, out var uiStacks))
                 {
-                    // 从栈中查找最后一个全屏界面
-                    for (int i = uiStacks.Count - 1; i >= 0; i--)
+                    // 遍历当前层的UI栈，从顶部开始查找
+                    foreach (var stackCeil in uiStacks)
                     {
-                        var stackCeil = uiStacks[i];
+                        // 先添加所有的窗口
+                        stackCeilsToReturn.Add(stackCeil);
 
-                        // 如果找到全屏界面，添加它和之前的所有窗口
-                        if (stackCeil.panel.IsFullPanel())
+                        // 如果找到全屏界面，停止继续遍历
+                        if (stackCeil.panel.IsFullPanel() && !foundFullScreen)
                         {
-                            stackCeilsToReturn.Add(stackCeil); // 添加全屏界面的包装类
-
-                            // 添加全屏界面所有的窗口
-                            foreach (var window in uiStacks)
-                            {
-                                if (window.panel != stackCeil.panel) // 确保不重复添加全屏界面
-                                {
-                                    stackCeilsToReturn.Add(window); // 添加窗口的包装类
-                                }
-                            }
-                            return stackCeilsToReturn; // 找到全屏界面后，返回结果
+                            foundFullScreen = true; // 标记找到全屏界面
+                            break; // 找到全屏界面后停止当前层级窗口遍历
                         }
                     }
                 }
+
+                // 如果找到全屏界面，跳出层级遍历
+                if (foundFullScreen)
+                {
+                    break;
+                }
             }
 
-            return stackCeilsToReturn; // 如果没有找到全屏界面，返回空列表
+            return stackCeilsToReturn; // 返回所有找到的窗口和第一个全屏界面
         }
 
+
+        // 属性：检查所有层级是否都为空（没有UI）排除层3 4
+        public bool IsAllLayersEmpty
+        {
+            get
+            {
+                // 遍历所有层级，检查每个层级的UI栈是否为空
+                foreach (var layer in _uiStacksDict.Keys)
+                {
+                    if (UILayerIndex(layer) == 3 || UILayerIndex(layer) == 4) continue;     // 如果是 3 4层就跳过
+
+                    if (_uiStacksDict.TryGetValue(layer, out var uiStack) && uiStack.Count > 0)
+                    {
+                        // 如果有任何层级的UI栈不为空，返回 false
+                        return false;
+                    }
+                }
+
+                // 如果所有层级的UI栈都为空，返回 true
+                return true;
+            }
+        }
+
+
+
+
+        private int UILayerIndex(string UIlayer)
+        {
+            switch (UIlayer)
+            {
+                case "Default":
+                    return 0;
+                case "Layer1":
+                    return 1;
+                case "Layer2":
+                    return 2;
+                case "Layer3":
+                    return 3;
+                case "Layer4":
+                    return 4;
+            }
+            return 0;
+        }
 
 
 
