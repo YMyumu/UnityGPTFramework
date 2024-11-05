@@ -62,6 +62,6 @@ public class LoadingUIPanel : UIBasePanel
     // 场景加载完成后隐藏加载界面
     private void OnSceneLoaded()
     {
-        Close();
+        UIManager.Instance.ClosePanel(GetPanelName());
     }
 }

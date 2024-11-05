@@ -64,7 +64,8 @@ namespace PoolModule
         }
 
         /// <summary>
-        /// 非泛型回收方法,将对象回收到指定类型的对象池中,必须实现 IPoolable 接口
+        /// 非泛型回收方法,将对象回收到对应类型对象池中,必须实现 IPoolable 接口
+        /// 主要用于无法指定准确类型的回收
         /// </summary>
         /// <param name="obj">要回收的对象实例</param>
         public void RecycleObject(IPoolable obj)

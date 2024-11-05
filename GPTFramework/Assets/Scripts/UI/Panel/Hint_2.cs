@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class Hint_2 : UIBasePanel
 {
     public Button closeBtn;
-    public Button openInfoWindow_1Btn, openInfoWindow_2Btn, openPanel_2Btn, openPanel_3Btn, openHint_1Btn;
+    public Button openInfoWindow_1Btn, openInfoWindow_2Btn, openPanel_2Btn, openPanel_3Btn, openPanel_4Btn, openHint_1Btn;
 
     protected override void Initialize(ScreenParam param)
     {
@@ -16,6 +16,7 @@ public class Hint_2 : UIBasePanel
         openInfoWindow_2Btn.onClick.AddListener(OpenInfoWindow_2Btn);
         openPanel_2Btn.onClick.AddListener(OpenPanel_2Btn);
         openPanel_3Btn.onClick.AddListener(OpenPanel_3Btn);
+        openPanel_4Btn.onClick.AddListener(OpenPanel_4Btn);
         openHint_1Btn.onClick.AddListener(OpenHint_1Btn);
 
     }
@@ -28,7 +29,7 @@ public class Hint_2 : UIBasePanel
 
     public void CloseBtn()
     {
-        Close();
+        UIManager.Instance.ClosePanel(GetPanelName());
     }
 
     public void OpenInfoWindow_1Btn()
@@ -49,6 +50,11 @@ public class Hint_2 : UIBasePanel
     public void OpenPanel_3Btn()
     {
         UIManager.Instance.OpenPanel(UIDefine.Panel_3);
+    }
+    
+    public void OpenPanel_4Btn()
+    {
+        UIManager.Instance.OpenPanel(UIDefine.Panel_4);
     }
 
     public void OpenHint_1Btn()

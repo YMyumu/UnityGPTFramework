@@ -20,6 +20,6 @@ public class Panel_3 : UIBasePanel
 
     public void CloseBtn()
     {
-        Close();
+        UIManager.Instance.ClosePanel(GetPanelName());
     }
 }

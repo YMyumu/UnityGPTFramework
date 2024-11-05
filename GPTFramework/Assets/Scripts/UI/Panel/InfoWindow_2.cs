@@ -21,7 +21,7 @@ public class InfoWindow_2 : UIBasePanel
 
     public void CloseBtn()
     {
-        Close();
+        UIManager.Instance.ClosePanel(GetPanelName());
     }
 
     public void OpenPanel_3Btn()

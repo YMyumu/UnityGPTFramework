@@ -20,6 +20,6 @@ public class SelectWindow_2 : UIBasePanel
 
     public void CloseBtn()
     {
-        Close();
+        UIManager.Instance.ClosePanel(GetPanelName());
     }
 }

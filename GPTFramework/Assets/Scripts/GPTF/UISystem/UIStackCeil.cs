@@ -12,10 +12,10 @@ namespace UIModule
     [System.Serializable]
     public class UIStackCeil : IPoolable
     {
-        public UIBasePanel Panel;
-        public bool IsShowing = false;
-        public bool IsCloseSameNamePanel = false;
-        private bool _isFirstShow = true;  // 新增字段，判断是否是第一次打开
+        public UIBasePanel panel;
+        public bool isShowing = false;          // 界面是正在显示的
+        public bool isHideWaitClose = false;    // 是被隐藏等待关闭的
+        private bool _isFirstShow = true;  // 判断是否是第一次打开
 
         private ScreenParam _param;
         private Dictionary<int, object> _panelParam = new Dictionary<int, object>();
@@ -23,20 +23,20 @@ namespace UIModule
         public IEnumerator Show(ScreenParam param = null)
         {
 
-            IsShowing = true;
+            isShowing = true;
             if (_isFirstShow)   // 第一次打开调用Open
             {
                 UIManager.Instance.ShowInputBlocker();
-                Panel.Open(param);
+                panel.Open(param);
                 // 启动打开动画协程（默认无动画）并等待其完成
-                yield return Panel.StartCoroutine(Panel.PlayOpenAnimationCoroutine());
+                yield return panel.StartCoroutine(panel.PlayOpenAnimationCoroutine());
                 _isFirstShow = false;
                 UIManager.Instance.HideInputBlocker();
 
             }
             else    // 后续调用Show
             {
-                Panel.Show();
+                panel.Show();
                 ResetPanelParam();
 
             }
@@ -45,9 +45,9 @@ namespace UIModule
 
         public void Hide()
         {
-            IsShowing = false;
+            isShowing = false;
             SavePanelParam();
-            Panel.Hide();
+            panel.Hide();
         }
 
 
@@ -55,33 +55,30 @@ namespace UIModule
         public IEnumerator Close()
         {
             // 启动关闭动画协程（默认无动画）并等待其完成
-            yield return Panel.StartCoroutine(Panel.PlayCloseAnimationCoroutine());
+            yield return panel.StartCoroutine(panel.PlayCloseAnimationCoroutine());
 
-            IsShowing = false;
-            IsCloseSameNamePanel = false;
-            Panel.OnCloseEvent();
-            Panel.Hide();
+            isShowing = false;
+            panel.OnCloseEvent();
+            panel.Hide();
             //Panel.Close();
         }
 
-        private void SavePanelParam() => _panelParam = Panel.GetPanelRuntimeParam();
-        private void ResetPanelParam() => Panel.ResetPanelRuntimeParam(_panelParam);
+        private void SavePanelParam() => _panelParam = panel.GetPanelRuntimeParam();
+        private void ResetPanelParam() => panel.ResetPanelRuntimeParam(_panelParam);
 
 
         public void Initialize(params object[] parameters)
         {
             if (parameters != null && parameters.Length > 0) _param = parameters[0] as ScreenParam;
-            IsShowing = false;
-            IsCloseSameNamePanel = false;
+            isShowing = false;
             _panelParam.Clear();
         }
 
         public void Reset()
         {
-            IsShowing = false;
-            IsCloseSameNamePanel = false;
+            isShowing = false;
             _panelParam.Clear();
-            Panel = null;
+            panel = null;
             _param = null;
             _isFirstShow = true;  // 重置标志位
         }
@@ -94,10 +91,9 @@ namespace UIModule
         public void Dispose()
         {
             // 清除引用类型字段，避免内存泄漏
-            IsShowing = false;
-            IsCloseSameNamePanel = false;
+            isShowing = false;
             _panelParam.Clear();
-            Panel = null;
+            panel = null;
             _param = null;
             _isFirstShow = true;  // 重置标志位
 

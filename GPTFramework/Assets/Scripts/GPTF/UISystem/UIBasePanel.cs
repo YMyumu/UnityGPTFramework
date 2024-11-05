@@ -80,12 +80,11 @@ namespace UIModule
         public virtual void Hide() => gameObject.SetActive(false); // 将当前游戏对象设置为非激活状态，从而隐藏 UI 面板
 
         /// <summary>
-        /// 关闭 UI 面板，调用 UIManager 的 ClosePanel 方法，并执行 OnClose 回调。
+        /// 关闭 UI 面板 关闭界面逻辑必须走UIManager！！！！！ 对于界面本身的直接销毁 不应该直接调用
         /// </summary>
         public virtual void Close()
         {
-            //OnClose?.Invoke(); // 如果定义了关闭回调，则执行回调
-            UIManager.Instance.ClosePanel(GetPanelName()); // 调用 UIManager 的 ClosePanel 方法，关闭当前面板
+            Destroy(gameObject);
         }
 
         // 由UIStackCeil来启动关闭事件

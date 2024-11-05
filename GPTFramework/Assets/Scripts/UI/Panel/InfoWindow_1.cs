@@ -22,7 +22,7 @@ public class InfoWindow_1 : UIBasePanel
 
     public void CloseBtn()
     {
-        Close();
+        UIManager.Instance.ClosePanel(GetPanelName());
     }
 
     public void OpenSelectWindow_1Btn()

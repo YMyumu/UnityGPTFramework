@@ -44,6 +44,6 @@ public class SelectWindow_1 : UIBasePanel
 
     public void CloseBtn()
     {
-        Close();
+        UIManager.Instance.ClosePanel(GetPanelName());
     }
 }
