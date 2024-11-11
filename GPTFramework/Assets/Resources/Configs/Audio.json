@@ -1,0 +1,216 @@
+{
+  "MixerGroupData": [
+    {
+      "groupname": "Master",
+      "initialvolume": 1,
+      "parentgroup": ""
+    },
+    {
+      "groupname": "Music",
+      "initialvolume": 1,
+      "parentgroup": "Master"
+    },
+    {
+      "groupname": "BGM",
+      "initialvolume": 1,
+      "parentgroup": "Music"
+    },
+    {
+      "groupname": "CombatMusic",
+      "initialvolume": 1,
+      "parentgroup": "Music"
+    },
+    {
+      "groupname": "AmbientMusic",
+      "initialvolume": 1,
+      "parentgroup": "Music"
+    },
+    {
+      "groupname": "BossMusic",
+      "initialvolume": 1,
+      "parentgroup": "Music"
+    },
+    {
+      "groupname": "SFX",
+      "initialvolume": 1,
+      "parentgroup": "Master"
+    },
+    {
+      "groupname": "Environment",
+      "initialvolume": 1,
+      "parentgroup": "SFX"
+    },
+    {
+      "groupname": "Weather",
+      "initialvolume": 1,
+      "parentgroup": "Environment"
+    },
+    {
+      "groupname": "Animals",
+      "initialvolume": 1,
+      "parentgroup": "Environment"
+    },
+    {
+      "groupname": "Ambience",
+      "initialvolume": 1,
+      "parentgroup": "Environment"
+    },
+    {
+      "groupname": "Player",
+      "initialvolume": 1,
+      "parentgroup": "SFX"
+    },
+    {
+      "groupname": "Footsteps",
+      "initialvolume": 1,
+      "parentgroup": "Player"
+    },
+    {
+      "groupname": "Jump",
+      "initialvolume": 1,
+      "parentgroup": "Player"
+    },
+    {
+      "groupname": "Damage",
+      "initialvolume": 1,
+      "parentgroup": "Player"
+    },
+    {
+      "groupname": "SpecialAbilities",
+      "initialvolume": 1,
+      "parentgroup": "Player"
+    },
+    {
+      "groupname": "Combat",
+      "initialvolume": 1,
+      "parentgroup": "SFX"
+    },
+    {
+      "groupname": "Weapons",
+      "initialvolume": 1,
+      "parentgroup": "Combat"
+    },
+    {
+      "groupname": "Swords",
+      "initialvolume": 1,
+      "parentgroup": "Weapons"
+    },
+    {
+      "groupname": "Guns",
+      "initialvolume": 1,
+      "parentgroup": "Weapons"
+    },
+    {
+      "groupname": "Explosions",
+      "initialvolume": 1,
+      "parentgroup": "Weapons"
+    },
+    {
+      "groupname": "Hits",
+      "initialvolume": 1,
+      "parentgroup": "Combat"
+    },
+    {
+      "groupname": "Misses",
+      "initialvolume": 1,
+      "parentgroup": "Combat"
+    },
+    {
+      "groupname": "Vehicles",
+      "initialvolume": 1,
+      "parentgroup": "SFX"
+    },
+    {
+      "groupname": "Cars",
+      "initialvolume": 1,
+      "parentgroup": "Vehicles"
+    },
+    {
+      "groupname": "Bikes",
+      "initialvolume": 1,
+      "parentgroup": "Vehicles"
+    },
+    {
+      "groupname": "Aircrafts",
+      "initialvolume": 1,
+      "parentgroup": "Vehicles"
+    },
+    {
+      "groupname": "UI",
+      "initialvolume": 1,
+      "parentgroup": "Master"
+    },
+    {
+      "groupname": "Buttons",
+      "initialvolume": 1,
+      "parentgroup": "UI"
+    },
+    {
+      "groupname": "Hover",
+      "initialvolume": 1,
+      "parentgroup": "UI"
+    },
+    {
+      "groupname": "Notifications",
+      "initialvolume": 1,
+      "parentgroup": "UI"
+    },
+    {
+      "groupname": "Menu",
+      "initialvolume": 1,
+      "parentgroup": "UI"
+    },
+    {
+      "groupname": "Voice",
+      "initialvolume": 1,
+      "parentgroup": "Master"
+    },
+    {
+      "groupname": "Dialogue",
+      "initialvolume": 1,
+      "parentgroup": "Voice"
+    },
+    {
+      "groupname": "Player",
+      "initialvolume": 1,
+      "parentgroup": "Voice"
+    },
+    {
+      "groupname": "NPC",
+      "initialvolume": 1,
+      "parentgroup": "Voice"
+    }
+  ],
+  "Audios": [
+    {
+      "name": "The Deysion - Perfect Day feat. R.I.B",
+      "path": "Audio/Audios/Music/BGM/The Deysion - Perfect Day feat. R.I.B.mp3",
+      "isloop": true,
+      "mixername": "BGM"
+    },
+    {
+      "name": "The Music Bed - Infinity",
+      "path": "Audio/Audios/Music/BGM/The Music Bed - Infinity.mp4",
+      "isloop": true,
+      "mixername": "BGM"
+    },
+    {
+      "name": "Item purchase 26",
+      "path": "Audio/Audios/UI/Menu/Item purchase 26.wav",
+      "isloop": false,
+      "mixername": "Menu"
+    },
+    {
+      "name": "Item purchase 29",
+      "path": "Audio/Audios/UI/Menu/Item purchase 29.wav",
+      "isloop": false,
+      "mixername": "Menu"
+    },
+    {
+      "name": "欢迎使用山河智能旋挖钻机XR展示系统",
+      "path": "Audio/Audios/Voice/NPC/欢迎使用山河智能旋挖钻机XR展示系统.mp3",
+      "isloop": false,
+      "mixername": "NPC"
+    }
+  ]
+}

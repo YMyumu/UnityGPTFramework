@@ -1,0 +1,86 @@
+{
+  "Chinese_Simplified": [
+    {
+      "key": "Open",
+      "text": "打开"
+    },
+    {
+      "key": "Close",
+      "text": "关闭"
+    },
+    {
+      "key": "Chinese_Simplified",
+      "text": "简体中文"
+    },
+    {
+      "key": "English",
+      "text": "英语"
+    },
+    {
+      "key": "SwitchLanguage",
+      "text": "切换语言"
+    },
+    {
+      "key": "Hint",
+      "text": "提示"
+    },
+    {
+      "key": "Test",
+      "text": "测试"
+    },
+    {
+      "key": "InfoWindow",
+      "text": "信息窗口"
+    },
+    {
+      "key": "SelectWindow",
+      "text": "选择窗口"
+    },
+    {
+      "key": "LoaderScene",
+      "text": "加载场景"
+    }
+  ],
+  "English": [
+    {
+      "key": "Open",
+      "text": "Open"
+    },
+    {
+      "key": "Close",
+      "text": "Close"
+    },
+    {
+      "key": "Chinese_Simplified",
+      "text": "Chinese_Simplified"
+    },
+    {
+      "key": "English",
+      "text": "English"
+    },
+    {
+      "key": "SwitchLanguage",
+      "text": "SwitchLanguage"
+    },
+    {
+      "key": "Hint",
+      "text": "Hint"
+    },
+    {
+      "key": "Test",
+      "text": "Test"
+    },
+    {
+      "key": "InfoWindow",
+      "text": "InfoWindow"
+    },
+    {
+      "key": "SelectWindow",
+      "text": "SelectWindow"
+    },
+    {
+      "key": "LoaderScene",
+      "text": "LoaderScene"
+    }
+  ]
+}
