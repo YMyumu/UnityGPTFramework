@@ -36,7 +36,6 @@ namespace UIModule
         public List<UIStackCeil> _uiStacks3Look = new List<UIStackCeil>();
         public List<UIStackCeil> _uiStacks4Look = new List<UIStackCeil>();
 
-
         private Dictionary<string, (string destroyTaskToken, UIStackCeil stackCeil)> _waitDestroyPanelDic = new Dictionary<string, (string, UIStackCeil)>();
 
         
@@ -134,7 +133,13 @@ namespace UIModule
             }
 
             // TOOD:这里需要做判断
-            HandleWaitingForDestruction(uiName); // 处理等待销毁的界面
+            HandleWaitingForDestruction(uiName);  //重新打开了等待销毁的面板逻辑
+
+            // 如果是模态界面
+            if (panel.IsModernPanel())
+            {
+                CreateModalBackground(panel, uiConfig.UILayer); // 创建模态背景
+            }
 
             // 检查是否已存在相同的全屏界面
             UIStackCeil existingFullScreenPanel = _uiStacksDict[uiConfig.UILayer].Find(p => p.panel == panel);
@@ -150,10 +155,12 @@ namespace UIModule
             }
 
 
-            if (panel.IsModernPanel())
-            {
-                CreateModalBackground(panel, uiConfig.UILayer); // 创建模态背景
-            }
+            // 关闭当前层之上的界面
+            ClosePanelsAbove(panel);
+
+            // 重新排序当前层
+            MovePanelToTopInLayer(panel);
+
         }
 
         // 加载 UI 面板配置
@@ -408,18 +415,39 @@ namespace UIModule
 
 
 
-        // 重新排列同层级内的 UI 顺序
-        private void ResortPanel(string layer)
+        /// <summary>
+        /// 将当前面板的层级顺序调整到当前层的最后，
+        /// 确保在当前层最上显示，同时调整字典中该层的顺序。
+        /// </summary>
+        /// <param name="currentPanel">需要调整的当前面板。</param>
+        private void MovePanelToTopInLayer(UIBasePanel currentPanel)
         {
-            int siblingIndex = 0; // 初始化顺序索引
-            foreach (var uiStackCeil in _uiStacksDict[layer])
+            // 获取当前界面所属的层级
+            string currentLayer = currentPanel.UILayer;
+
+            // 检查当前层的栈是否存在
+            if (!_uiStacksDict.TryGetValue(currentLayer, out var uiStackList))
             {
-                if (uiStackCeil.isShowing && uiStackCeil.panel.transform.parent == GetLayerRoot(layer))
-                {
-                    uiStackCeil.panel.transform.SetSiblingIndex(siblingIndex++); // 设置面板的顺序
-                }
+                Debug.LogError($"当前层 {currentLayer} 的 UI 栈不存在！");
+                return;
             }
+
+            // 找到对应的 UIStackCeil
+            UIStackCeil targetStackCeil = uiStackList.Find(stackCeil => stackCeil.panel == currentPanel);
+            if (targetStackCeil == null)
+            {
+                Debug.LogError($"在层 {currentLayer} 中未找到面板 {currentPanel.GetPanelName()} 的栈元素！");
+                return;
+            }
+
+            // 调整 Hierarchy 层级顺序
+            currentPanel.transform.SetSiblingIndex(currentPanel.transform.parent.childCount - 1);
+
+            // 调整字典中当前层的顺序，将目标元素移到最后
+            uiStackList.Remove(targetStackCeil);
+            uiStackList.Add(targetStackCeil);
         }
+
 
 
 
@@ -454,7 +482,13 @@ namespace UIModule
 
 
 
-        // 获取当前层到上一个全屏界面的所有窗口，包括全屏界面的包装类 UIStackCeil
+        /// <summary>
+        /// 获取当前层到上一个全屏界面的所有窗口，包括全屏界面的包装类 UIStackCeil
+        /// 如果当前打开的全屏界面需要关闭同层 则不处理当前层
+        /// </summary>
+        /// <param name="currentLayer">当前层</param>
+        /// <param name="isCloseSameLayer">当前打开的界面是否要关闭当前层界面</param>
+        /// <returns></returns>
         public List<UIStackCeil> GetPreviousFullScreenStackCeils(string currentLayer, bool isCloseSameLayer)
         {
             List<UIStackCeil> stackCeilsToReturn = new List<UIStackCeil>();
@@ -498,6 +532,66 @@ namespace UIModule
 
             return stackCeilsToReturn; // 返回所有找到的窗口和第一个全屏界面
         }
+
+        /// <summary>
+        /// 关闭当前打开界面之上的所有界面，排除当前层、层级 3 和 4，
+        /// 优先关闭全屏界面（从上到下），再关闭非全屏界面（从上到下）。
+        /// </summary>
+        /// <param name="currentPanel">当前打开的界面。</param>
+        private void ClosePanelsAbove(UIBasePanel currentPanel)
+        {
+            // 获取当前界面所属的层级
+            string currentLayer = currentPanel.UILayer;
+
+            // 创建两个列表存储需要关闭的界面
+            List<UIStackCeil> fullscreenPanelsToClose = new List<UIStackCeil>();
+            List<UIStackCeil> otherPanelsToClose = new List<UIStackCeil>();
+
+            // 遍历所有层，从上到下
+            foreach (var layer in _uiStacksDict.Keys)
+            {
+                // 排除当前层、当前层以下的层级，以及层级 3 和 4
+                if (UILayerIndex(layer) <= UILayerIndex(currentLayer) || UILayerIndex(layer) == 3 || UILayerIndex(layer) == 4)
+                {
+                    continue;
+                }
+
+                // 检查当前层的 UI 栈
+                if (_uiStacksDict.TryGetValue(layer, out var uiStacks))
+                {
+                    // 从栈顶开始遍历
+                    foreach (var stackCeil in uiStacks)
+                    {
+                        // 如果是全屏界面，优先添加到全屏关闭列表
+                        if (stackCeil.panel.IsFullPanel())
+                        {
+                            fullscreenPanelsToClose.Add(stackCeil);
+                        }
+                        else
+                        {
+                            // 非全屏界面添加到其他关闭列表
+                            otherPanelsToClose.Add(stackCeil);
+                        }
+                    }
+                }
+            }
+
+            // 优先关闭全屏界面
+            foreach (var stackCeil in fullscreenPanelsToClose)
+            {
+
+                // 关闭全屏界面
+                ClosePanel(stackCeil.panel.GetPanelName());
+            }
+
+            // 再关闭其他界面
+            foreach (var stackCeil in otherPanelsToClose)
+            {
+                // 关闭非全屏界面
+                ClosePanel(stackCeil.panel.GetPanelName());
+            }
+        }
+
 
 
         // 属性：检查所有层级是否都为空（没有UI）排除层3 4

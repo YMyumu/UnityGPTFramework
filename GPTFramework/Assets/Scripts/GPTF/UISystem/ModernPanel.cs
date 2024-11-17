@@ -51,9 +51,9 @@ namespace UIModule
                 btnClose.onClick.RemoveAllListeners(); // 移除所有之前的监听事件，确保不会重复绑定
 
                 // 只有配置里可以点击模态界面能关闭才绑定关闭逻辑
-                if (panel.ClickModernNeedClosePanel())
-                    btnClose.onClick.AddListener(_panel.Close); // 为关闭按钮添加点击事件，调用传入面板的 Close 方法来关闭模态窗口
-
+                btnClose.onClick.AddListener(() => {
+                    UIManager.Instance.ClosePanel(_panel.GetPanelName());// 为关闭按钮添加点击事件
+                });
 
                 _panel.OnClose += Close;
             }
