@@ -58,6 +58,7 @@ namespace UIModule
             yield return panel.StartCoroutine(panel.PlayCloseAnimationCoroutine());
 
             isShowing = false;
+            _isFirstShow = true;
             panel.OnCloseEvent();
             panel.Hide();
             //Panel.Close();
